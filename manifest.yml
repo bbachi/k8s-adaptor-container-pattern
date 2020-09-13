@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: node-webapp
+  name: node-webapp
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: node-webapp
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: node-webapp
+    spec:
+      containers:
+      - image: busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo $(date -u)'#This is log' >> /var/log/file.log; sleep 5;done"]
+        name: main-container
+        resources: {}
+        volumeMounts:
+          - name: var-logs
+            mountPath: /var/log
+      - image: bbachin1/adapter-node-server
+        name: adapter-container
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+          - containerPort: 3080
+        volumeMounts:
+        - name: var-logs
+          mountPath: /var/log
+      dnsPolicy: Default
+      volumes:
+      - name: var-logs
+        emptyDir: {}
+status: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-webapp
+  labels:
+    run: node-webapp
+spec:
+  ports:
+  - port: 3080
+    protocol: TCP
+  selector:
+    app: node-webapp
+  type: NodePort
